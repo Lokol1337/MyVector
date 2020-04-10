@@ -1,5 +1,6 @@
 #include <iostream>
 #include "MyVector.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -35,6 +36,7 @@ using namespace std;
  MyVector::~MyVector()
  {
     delete [] _data;
+    _data = nullptr;
     _size = 0;
     _capacity = 0;
  }
@@ -241,15 +243,15 @@ void MyVector::resize(const size_t size, const ValueType)
             bufArr = nullptr;
             _size = size;
         }
-        _capacity = _size * _coef;
-        //while(loadFactor()>1)
-        //{
-            //_capacity = _capacity*_coef;
-        //}
-        //if(loadFactor()<=(1/(_coef*_coef)))
-        //{
-            //_capacity =_capacity*(1/_coef);
-        //}
+        if(loadFactor()>1)
+        {
+            _capacity = _size * _coef;
+        }
+
+        if(loadFactor()<=(1/(_coef*_coef)))
+        {
+            _capacity =_capacity*(1/_coef);
+        }
     }
 
 }
@@ -274,6 +276,26 @@ void MyVector::erase(const size_t i)
     bufArr = nullptr;
 }
 
+void MyVector::erase(const size_t i, const size_t len)
+{
+    ValueType* bufArr = new ValueType [_size-len];
+    for(int j = 0;j < i;j++)
+    {
+        bufArr[j] = _data[j];
+    }
+    for(int k = i+len;k < _size;k++)
+    {
+        bufArr[k-len] = _data[k];
+    }
+    resize(_size - len);
+    for(int m = 0;m < _size;m++)
+    {
+        _data[m] = bufArr[m];
+    }
+    delete [] bufArr;
+    bufArr = nullptr;
+}
+
 void MyVector::clear()
 {
     delete [] _data;
@@ -281,15 +303,92 @@ void MyVector::clear()
     _size = 0;
 }
 
+ValueType* MyVector::begin()
+{
+    return _data;
+}
+
+ValueType* MyVector::end()
+{
+    return _data + _size;
+}
+
+long long int MyVector::find(const ValueType& value, bool isBegin) const
+{
+    int a = 0;
+    if(isBegin==true)
+    {
+        for(int i = 0;i < _size;i++)
+        {
+            if(_data[i] == value)
+            {
+                a = 1;
+                return i;
+
+            }
+        }
+    }
+    if(isBegin==false)
+    {
+        for(int i = _size;i > 0;--i)
+        {
+            if(_data[i] == value)
+            {
+                a = 1;
+                return i;
+            }
+
+        }
+    }
+    if(a == 0)
+    {
+        return -1;
+    }
+}
+
+MyVector sortedSquares(const MyVector& vec, SortedStrategy strategy)
+{
+    size_t j = 0;
+    for(int i = 0;i < vec.size();i++)
+    {
+        vec[i]=vec[i]*vec[i];
+
+    }
+    if(strategy == SortedStrategy::Ascending)
+    {
+        j=0;
+        while(vec[j]>vec[j+1])
+        {
+            swap(vec[j],vec[j+1]);
+            j++;
+            if(j>vec.size() || vec[j+1] >= vec[j])
+                j=0;
+        }
+    }
+    if(strategy == SortedStrategy::Descending)
+    {
+        j=vec.size()-1;
+        while(vec[j]>vec[j-1])
+        {
+            swap(vec[j],vec[j-1]);
+            j--;
+            if(j==0 || vec[j-1] >= vec[j])
+                j=vec.size()-1;
+        }
+    }
+}
+
+
 int main()
 {
     MyVector m;
-    MyVector v(3,5);
-    for(int j = 0;j < 5;j++)
+    for(int j = -10;j <= 10;++j)
         m.pushBack(j);
-    m.insert(3,v);
+    sortedSquares(m,SortedStrategy::Descending);
     for(int i = 0;i<m.size();i++)
         cout<<m[i]<<" ";
+    cout<<endl;
+    cout<<m.find(1,true);
     cout<<endl;
     cout<<m.size()<<" "<<m.capacity();
 }
