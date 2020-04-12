@@ -1,6 +1,6 @@
 #pragma once
 
-// стратегия изменения capacity
+// СЃС‚СЂР°С‚РµРіРёСЏ РёР·РјРµРЅРµРЅРёСЏ capacity
 enum class ResizeStrategy {
 	Additive,
 	Multiplicative
@@ -11,8 +11,8 @@ enum class SortedStrategy{
     Descending
 };
 
-// тип значений в векторе
-// потом будет заменен на шаблон
+// С‚РёРї Р·РЅР°С‡РµРЅРёР№ РІ РІРµРєС‚РѕСЂРµ
+// РїРѕС‚РѕРј Р±СѓРґРµС‚ Р·Р°РјРµРЅРµРЅ РЅР° С€Р°Р±Р»РѕРЅ
 
 
 using ValueType = double;
@@ -20,55 +20,55 @@ using ValueType = double;
 class MyVector
 {
 public:
-	MyVector(size_t size = 0, ResizeStrategy = ResizeStrategy::Multiplicative, float coef = 1.5f);//
-	MyVector(size_t size, ValueType value, ResizeStrategy = ResizeStrategy::Multiplicative, float coef = 1.5f);//
+	MyVector(size_t size = 0, ResizeStrategy = ResizeStrategy::Additive, float coef = 1.5f, size_t delta = 5);//
+	MyVector(size_t size, ValueType value, ResizeStrategy = ResizeStrategy::Multiplicative, float coef = 1.5f, size_t delta = 5);//
 
 	MyVector(const MyVector& copy);//
 	MyVector& operator=(const MyVector& copy);//
 
 	~MyVector();//
 
-	// для умненьких — реализовать конструктор и оператор для перемещения
+	// РґР»СЏ СѓРјРЅРµРЅСЊРєРёС… вЂ” СЂРµР°Р»РёР·РѕРІР°С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ Рё РѕРїРµСЂР°С‚РѕСЂ РґР»СЏ РїРµСЂРµРјРµС‰РµРЅРёСЏ
 
 	size_t capacity() const;//
 	size_t size() const;//
 	float loadFactor();//
 
-	// доступ к элементу,
-	// должен работать за O(1)
+	// РґРѕСЃС‚СѓРї Рє СЌР»РµРјРµРЅС‚Сѓ,
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° O(1)
 	ValueType& operator[](const size_t i) const;//
 
-	// добавить в конец,
-	// должен работать за amort(O(1))
+	// РґРѕР±Р°РІРёС‚СЊ РІ РєРѕРЅРµС†,
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° amort(O(1))
 	void pushBack(const ValueType& value);//
-	// вставить,
-	// должен работать за O(n)
-	void insert(const size_t i, const ValueType& value);//	// версия для одного значения
-	void insert(const size_t i, const MyVector& value);	//	// версия для вектора
+	// РІСЃС‚Р°РІРёС‚СЊ,
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° O(n)
+	void insert(const size_t i, const ValueType& value);//	// РІРµСЂСЃРёСЏ РґР»СЏ РѕРґРЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ
+	void insert(const size_t i, const MyVector& value);	//	// РІРµСЂСЃРёСЏ РґР»СЏ РІРµРєС‚РѕСЂР°
 
-	// удалить с конца,
-	// должен работать за amort(O(1))
+	// СѓРґР°Р»РёС‚СЊ СЃ РєРѕРЅС†Р°,
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° amort(O(1))
 	void popBack();//
-	// удалить
-	// должен работать за O(n)
+	// СѓРґР°Р»РёС‚СЊ
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° O(n)
 	void erase(const size_t i);//
-	void erase(const size_t i, const size_t len);//			// удалить len элементов начиная с i
+	void erase(const size_t i, const size_t len);//			// СѓРґР°Р»РёС‚СЊ len СЌР»РµРјРµРЅС‚РѕРІ РЅР°С‡РёРЅР°СЏ СЃ i
 
-	// найти элемент,
-	// должен работать за O(n)
-	// если isBegin == true, найти индекс первого элемента, равного value, иначе последнего
-	// если искомого элемента нет, вернуть -1
+	// РЅР°Р№С‚Рё СЌР»РµРјРµРЅС‚,
+	// РґРѕР»Р¶РµРЅ СЂР°Р±РѕС‚Р°С‚СЊ Р·Р° O(n)
+	// РµСЃР»Рё isBegin == true, РЅР°Р№С‚Рё РёРЅРґРµРєСЃ РїРµСЂРІРѕРіРѕ СЌР»РµРјРµРЅС‚Р°, СЂР°РІРЅРѕРіРѕ value, РёРЅР°С‡Рµ РїРѕСЃР»РµРґРЅРµРіРѕ
+	// РµСЃР»Рё РёСЃРєРѕРјРѕРіРѕ СЌР»РµРјРµРЅС‚Р° РЅРµС‚, РІРµСЂРЅСѓС‚СЊ -1
 	long long int find(const ValueType& value, bool isBegin) const;//
 
-	// зарезервировать память (принудительно задать capacity)
+	// Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°С‚СЊ РїР°РјСЏС‚СЊ (РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ Р·Р°РґР°С‚СЊ capacity)
 	void reserve(const size_t capacity);//
 
-	// изменить размер
-	// если новый размер больше текущего, то новые элементы забиваются дефолтными значениями
-	// если меньше - обрезаем вектор
+	// РёР·РјРµРЅРёС‚СЊ СЂР°Р·РјРµСЂ
+	// РµСЃР»Рё РЅРѕРІС‹Р№ СЂР°Р·РјРµСЂ Р±РѕР»СЊС€Рµ С‚РµРєСѓС‰РµРіРѕ, С‚Рѕ РЅРѕРІС‹Рµ СЌР»РµРјРµРЅС‚С‹ Р·Р°Р±РёРІР°СЋС‚СЃСЏ РґРµС„РѕР»С‚РЅС‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё
+	// РµСЃР»Рё РјРµРЅСЊС€Рµ - РѕР±СЂРµР·Р°РµРј РІРµРєС‚РѕСЂ
 	void resize(const size_t size, const ValueType = 0.0);//
 
-	// очистка вектора, без изменения capacity
+	// РѕС‡РёСЃС‚РєР° РІРµРєС‚РѕСЂР°, Р±РµР· РёР·РјРµРЅРµРЅРёСЏ capacity
 	void clear();//
 
 	ValueType* begin();//
@@ -76,6 +76,8 @@ public:
 
 
 private:
+    size_t _delta;
+    ResizeStrategy _strat;
 	ValueType* _data;
 	size_t _size;
 	size_t _capacity;
