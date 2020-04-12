@@ -4,20 +4,38 @@
 
 using namespace std;
 
-MyVector::MyVector(size_t size, ResizeStrategy, float coef)
+MyVector::MyVector(size_t size, ResizeStrategy strat, float coef, size_t delta)
 {
 	_size = size;
 	_capacity = 1;
 	_data = nullptr;
-	_coef = coef;
+	_strat = strat;
+	if(_strat == ResizeStrategy::Additive)
+    {
+        _delta = delta;
+    }
+
+    else
+    {
+        _coef = coef;
+    }
 }
 
-MyVector::MyVector(size_t size, ValueType value, ResizeStrategy, float coef)
+MyVector::MyVector(size_t size, ValueType value, ResizeStrategy strat, float coef, size_t delta)
 {
+    _strat = strat;
 	_size = size;
-	_coef = coef;
-	_capacity = _size * _coef;
-	_data = new ValueType[_capacity];
+    if(_strat == ResizeStrategy::Multiplicative)
+    {
+        _coef = coef;
+        _capacity = _size * _coef;
+    }
+    else
+    {
+        _delta = delta;
+        _capacity = _size + _delta;
+    }
+    _data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
 		_data[i] = value;
 }
@@ -26,6 +44,15 @@ MyVector::MyVector(const MyVector& copy)
 {
 	_size = copy._size;
 	_capacity = copy._capacity;
+	_strat = copy._strat;
+	if(_strat == ResizeStrategy::Multiplicative)
+    {
+        _coef = copy._coef;
+    }
+    else
+    {
+        _delta = copy._delta;
+    }
 	_data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
 	{
@@ -45,6 +72,14 @@ MyVector& MyVector::operator=(const MyVector& copy)
 {
 	_size = copy._size;
 	_capacity = copy._capacity;
+	if(copy._strat == ResizeStrategy::Multiplicative)
+    {
+        _coef = copy._coef;
+    }
+    else
+    {
+        _delta = copy._delta;
+    }
 	_data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
 	{
@@ -119,7 +154,7 @@ void MyVector::insert(const size_t i, const ValueType& value)
 		{
 			bufArr[v] = _data[v];
 		}
-		bufArr[i-1] = value;
+		bufArr[i] = value;
 		resize(_size + 1);
 		for (int c = 0; c < _size; c++)
 		{
@@ -197,76 +232,145 @@ void MyVector::reserve(const size_t capacity)
     delete [] _data;
 	_data = nullptr;
 	_data = new ValueType[_capacity];
-	for(int j = 0;j < _size;j++)
+	if(_capacity < _size)
     {
-        _data[j] = bufArr[j];
+        for(int j = 0;j < _capacity;j++)
+        {
+            _data[j] = bufArr[j];
+        }
+        _size = _capacity;
     }
+
+    if(_capacity>_size)
+    {
+        for(int j = 0;j < _capacity;j++)
+        {
+            _data[j] = bufArr[j];
+        }
+
+    }
+
     delete [] bufArr;
     bufArr = nullptr;
 }
 
 void MyVector::resize(const size_t size, const ValueType)
 {
-	if (_size == 0)
-	{
-	    _size = size;
-	    _capacity = _size * _coef;
-		_data = new ValueType[_capacity];
-		for (int i = 0; i < _size; i++)
-		{
-			_data[i] = 0;
-		}
-	}
-	else
-	{
-		ValueType* bufArr = new ValueType[size];
-		if (size > _size)
-		{
-			for (int i = 0; i < _size; i++)
-			{
-				bufArr[i] = _data[i];
-			}
-			for (int j = _size; j < size; j++)
-			{
-				bufArr[j] = 0;
-			}
-			delete[] _data;
-			_data = nullptr;
-			_size = size;
-			if (loadFactor() > 1)
+    if(_strat == ResizeStrategy::Multiplicative)
+    {
+        if (_size == 0)
+        {
+            _size = size;
+            _capacity = _size * _coef;
+            _data = new ValueType[_capacity];
+            for (int i = 0; i < _size; i++)
             {
-                _capacity = _size * _coef;
+                _data[i] = 0;
             }
-			_data = new ValueType[_capacity];
-			for (int k = 0; k < size; k++)
-			{
-				_data[k] = bufArr[k];
-			}
-			delete[] bufArr;
-			bufArr = nullptr;
-		}
-		else
-		{
-			for (int i = 0; i < size; i++)
-			{
-				bufArr[i] = _data[i];
-			}
-			delete[] _data;
-			_data = nullptr;
-			_size = size;
-			if (loadFactor() <= (1 / (_coef * _coef)))
+        }
+        else
+        {
+            ValueType* bufArr = new ValueType[size];
+            if (size > _size)
             {
-                _capacity = _capacity * (1 / _coef);
+                for (int i = 0; i < _size; i++)
+                {
+                    bufArr[i] = _data[i];
+                }
+                for (int j = _size; j < size; j++)
+                {
+                    bufArr[j] = 0;
+                }
+                delete[] _data;
+                _data = nullptr;
+                _size = size;
+                while (loadFactor() > 1)
+                {
+                    _capacity = _size * _coef;
+
+                }
+                _data = new ValueType[_capacity];
+                for (int k = 0; k < size; k++)
+                {
+                    _data[k] = bufArr[k];
+                }
+                delete[] bufArr;
+                bufArr = nullptr;
             }
-			_data = new ValueType[_capacity];
-			for (int k = 0; k < size; k++)
-			{
-				_data[k] = bufArr[k];
-			}
-			delete[] bufArr;
-			bufArr = nullptr;
-		}
-	}
+            else
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    bufArr[i] = _data[i];
+                }
+                delete[] _data;
+                _data = nullptr;
+                _size = size;
+                while (loadFactor() <= (1 / (_coef * _coef)))
+                {
+                    _capacity = _capacity * (1 / _coef);
+                }
+                _data = new ValueType[_capacity];
+                for (int k = 0; k < size; k++)
+                {
+                    _data[k] = bufArr[k];
+                }
+                delete[] bufArr;
+                bufArr = nullptr;
+            }
+        }
+    }
+    else
+    {
+        ValueType* bufArr = new ValueType [size];
+        if(size > _size)
+        {
+            for(int i = 0;i < _size;i++)
+            {
+                bufArr[i] = _data[i];
+            }
+            for(int j = _size; j < size;j++)
+            {
+                bufArr[j] = 0;
+            }
+            _size = size;
+            delete [] _data;
+            _data = nullptr;
+            while(loadFactor()>1)
+            {
+                 _capacity = _capacity + _delta;
+            }
+            _data = new ValueType [_capacity];
+            for(int k = 0;k < _size;k++)
+            {
+                _data[k] = bufArr[k];
+            }
+            delete [] bufArr;
+            bufArr = nullptr;
+        }
+        else
+        {
+            for(int i = 0;i < size;i++)
+            {
+                bufArr[i] = _data[i];
+            }
+            delete [] _data;
+            _data = nullptr;
+            _size = size;
+            while(_capacity - _size > _delta)
+            {
+                _capacity = _capacity - _delta;
+            }
+            _data = new ValueType [_capacity];
+            for(int j = 0;j < _size;j++)
+            {
+                _data[j] = bufArr[j];
+            }
+            delete [] bufArr;
+            bufArr = nullptr;
+        }
+    }
+
 }
 
 void MyVector::erase(const size_t i)
@@ -401,11 +505,12 @@ int main()
 	MyVector m;
 	for (int j = -10; j <= 10; ++j)
 		m.pushBack(j);
-    for (int i = 0; i < m.size(); i++)
-		cout << m[i] << " ";
+    for(int i = 0;i < m.size();i++)
+        cout<<m[i]<<" ";
 	cout << endl;
-	sortedSquares(m, SortedStrategy::Ascending);
-	for (int i = 0; i < m.size(); i++)
-		cout << m[i] << " ";
+	m.clear();
+	 for(int i = 0;i < m.size();i++)
+        cout<<m[i]<<" ";
 	cout << endl;
+	cout <<m.capacity();
 }
