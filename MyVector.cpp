@@ -1,27 +1,37 @@
+#pragma once
 #include <iostream>
 #include "MyVector.h"
 #include <algorithm>
 
 using namespace std;
 
-MyVector::MyVector(size_t size, ResizeStrategy strat, float coef, size_t delta)
+MyVector::MyVector(size_t size, ResizeStrategy strat, float coef)
 {
 	_size = size;
 	_capacity = 1;
-	_data = nullptr;
 	_strat = strat;
 	if(_strat == ResizeStrategy::Additive)
     {
-        _delta = delta;
+        _coef = coef;
+		while (loadFactor() > 1)
+		{
+			_capacity = _capacity + _coef;
+		}
+		_data = new ValueType[_capacity];
     }
 
     else
     {
         _coef = coef;
+		while (loadFactor() > 1)
+		{
+			_capacity = _capacity * _coef;
+		}
+		_data = new ValueType[_capacity];
     }
 }
 
-MyVector::MyVector(size_t size, ValueType value, ResizeStrategy strat, float coef, size_t delta)
+MyVector::MyVector(size_t size, ValueType value, ResizeStrategy strat, float coef)
 {
     _strat = strat;
 	_size = size;
@@ -32,8 +42,8 @@ MyVector::MyVector(size_t size, ValueType value, ResizeStrategy strat, float coe
     }
     else
     {
-        _delta = delta;
-        _capacity = _size + _delta;
+		_coef = coef;
+        _capacity = _size + _coef;
     }
     _data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
@@ -51,7 +61,7 @@ MyVector::MyVector(const MyVector& copy)
     }
     else
     {
-        _delta = copy._delta;
+       _coef = copy._coef;
     }
 	_data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
@@ -78,7 +88,7 @@ MyVector& MyVector::operator=(const MyVector& copy)
     }
     else
     {
-        _delta = copy._delta;
+        _coef = copy._coef;
     }
 	_data = new ValueType[_capacity];
 	for (int i = 0; i < _size; i++)
@@ -110,14 +120,36 @@ float MyVector::loadFactor()
 
 void MyVector::pushBack(const ValueType& value)
 {
-	resize(_size + 1);
-	_data[_size - 1] = value;
+	if (_size + 1 <= _capacity)
+	{
+		_size++;
+		_data[_size - 1] = value;
+	}
+	else {
+		resize(_size + 1);
+		_data[_size - 1] = value;
+	}
 }
 
 void MyVector::popBack()
 {
 	if (_size > 0)
-		resize(_size - 1);
+	{
+		_data[_size - 1] = 0;
+		_size--;
+		while (loadFactor() <= (1 / (_coef * _coef)))
+		{
+			if (_strat == ResizeStrategy::Multiplicative)
+			{
+				_capacity = _capacity / _coef;
+			}
+			else
+			{
+				_capacity = _capacity - _coef;
+			}
+		}
+	}
+		
 }
 
 void MyVector::insert(const size_t i, const ValueType& value)
@@ -254,7 +286,7 @@ void MyVector::reserve(const size_t capacity)
     bufArr = nullptr;
 }
 
-void MyVector::resize(const size_t size, const ValueType)
+void MyVector::resize(const size_t size, const ValueType value)
 {
     if(_strat == ResizeStrategy::Multiplicative)
     {
@@ -265,7 +297,7 @@ void MyVector::resize(const size_t size, const ValueType)
             _data = new ValueType[_capacity];
             for (int i = 0; i < _size; i++)
             {
-                _data[i] = 0;
+                _data[i] = value;
             }
         }
         else
@@ -279,7 +311,7 @@ void MyVector::resize(const size_t size, const ValueType)
                 }
                 for (int j = _size; j < size; j++)
                 {
-                    bufArr[j] = 0;
+                    bufArr[j] = value;
                 }
                 delete[] _data;
                 _data = nullptr;
@@ -331,14 +363,14 @@ void MyVector::resize(const size_t size, const ValueType)
             }
             for(int j = _size; j < size;j++)
             {
-                bufArr[j] = 0;
+                bufArr[j] = value;
             }
             _size = size;
             delete [] _data;
             _data = nullptr;
             while(loadFactor()>1)
             {
-                 _capacity = _capacity + _delta;
+                 _capacity = _capacity +_coef;
             }
             _data = new ValueType [_capacity];
             for(int k = 0;k < _size;k++)
@@ -357,9 +389,9 @@ void MyVector::resize(const size_t size, const ValueType)
             delete [] _data;
             _data = nullptr;
             _size = size;
-            while(_capacity - _size > _delta)
+            while(_capacity - _size > _coef)
             {
-                _capacity = _capacity - _delta;
+                _capacity = _capacity - _coef;
             }
             _data = new ValueType [_capacity];
             for(int j = 0;j < _size;j++)
@@ -467,50 +499,52 @@ long long int MyVector::find(const ValueType& value, bool isBegin) const
 
 MyVector sortedSquares(const MyVector& vec, SortedStrategy strategy)
 {
-	size_t j = 0;
+	MyVector bufArr(vec);
 	for (int i = 0; i < vec.size(); i++)
 	{
-		vec[i] = vec[i] * vec[i];
-
+		bufArr[i] = bufArr[i] * bufArr[i];
 	}
-	if (strategy == SortedStrategy::Ascending)
+	int j = bufArr.size() - 1;
+	int i = 0;
+	while(i<=j)
 	{
-		j = 0;
-		while (vec[j] >= vec[j + 1])
+		if (bufArr[i] > bufArr[j])
 		{
-			swap(vec[j], vec[j + 1]);
-			j++;
-			if (j > vec.size() || vec[j + 1] >= vec[j])
-				j = 0;
+			if (strategy == SortedStrategy::Ascending)
+			{
+				vec[j-i] = bufArr[i];
+			}
+			else
+			{
+				vec[bufArr.size() - j + i - 1] = bufArr[i];
+			}
+			i++;
 		}
-		return vec;
-	}
-	if (strategy == SortedStrategy::Descending)
-	{
-		j = vec.size() - 1;
-		while (vec[j] > vec[j - 1])
+		else
 		{
-			swap(vec[j], vec[j - 1]);
+			if (strategy == SortedStrategy::Ascending)
+			{
+				vec[j - i] = bufArr[j];
+			}
+			else
+			{
+				vec[bufArr.size() - j + i - 1] = bufArr[j];
+			}
 			j--;
-			if (j == 0 || vec[j - 1] >= vec[j])
-				j = vec.size() - 1;
 		}
-		return vec;
 	}
+	return vec;
 }
 
 
-int main()
+/*int main()
 {
-	MyVector m;
-	for (int j = -10; j <= 10; ++j)
-		m.pushBack(j);
-    for(int i = 0;i < m.size();i++)
-        cout<<m[i]<<" ";
-	cout << endl;
-	m.clear();
-	 for(int i = 0;i < m.size();i++)
-        cout<<m[i]<<" ";
-	cout << endl;
-	cout <<m.capacity();
-}
+	MyVector a;
+	for (int i = -5; i <= 5; i++)
+		a.pushBack(i);
+	a = sortedSquares(a,SortedStrategy::Ascending);
+	for (int i = 0; i < a.size(); i++)
+	{
+		cout << a[i] << " ";
+	}
+}*
