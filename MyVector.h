@@ -6,9 +6,11 @@ enum class ResizeStrategy {
 	Multiplicative
 };
 
-enum class SortedStrategy{
-    Ascending,
-    Descending
+
+
+enum class SortedStrategy {
+	Ascending,
+	Descending
 };
 
 // тип значений в векторе
@@ -20,8 +22,8 @@ using ValueType = double;
 class MyVector
 {
 public:
-	MyVector(size_t size = 0, ResizeStrategy = ResizeStrategy::Additive, float coef = 1.5f, size_t delta = 5);//
-	MyVector(size_t size, ValueType value, ResizeStrategy = ResizeStrategy::Multiplicative, float coef = 1.5f, size_t delta = 5);//
+	MyVector(size_t size = 0, ResizeStrategy = ResizeStrategy::Additive, float coef = 2.0f);//
+	MyVector(size_t size, ValueType value, ResizeStrategy = ResizeStrategy::Multiplicative, float coef = 2.0f);//
 
 	MyVector(const MyVector& copy);//
 	MyVector& operator=(const MyVector& copy);//
@@ -33,6 +35,7 @@ public:
 	size_t capacity() const;//
 	size_t size() const;//
 	float loadFactor();//
+	size_t loadFactorResize(bool how);
 
 	// доступ к элементу,
 	// должен работать за O(1)
@@ -66,7 +69,7 @@ public:
 	// изменить размер
 	// если новый размер больше текущего, то новые элементы забиваются дефолтными значениями
 	// если меньше - обрезаем вектор
-	void resize(const size_t size, const ValueType = 0.0);//
+	void resize(const size_t size, const ValueType value = 0.0);//
 
 	// очистка вектора, без изменения capacity
 	void clear();//
@@ -76,8 +79,7 @@ public:
 
 
 private:
-    size_t _delta;
-    ResizeStrategy _strat;
+	ResizeStrategy _strat;
 	ValueType* _data;
 	size_t _size;
 	size_t _capacity;
