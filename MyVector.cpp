@@ -22,6 +22,10 @@ MyVector::MyVector(size_t size, ResizeStrategy strat, float coef)
 			_coef = coef;
 			_capacity = _size + _coef;
 			_data = new ValueType[_capacity];
+			for (size_t i = 0; i < _size; i++)
+			{
+				_data[i] = ValueType();
+			}
 		}
 
 		else
@@ -29,6 +33,10 @@ MyVector::MyVector(size_t size, ResizeStrategy strat, float coef)
 			_coef = coef;
 			_capacity = _size * _coef;
 			_data = new ValueType[_capacity];
+			for (size_t i = 0; i < _size; i++)
+			{
+				_data[i] = ValueType();
+			}
 		}
 	}
 }
