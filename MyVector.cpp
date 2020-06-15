@@ -2,6 +2,7 @@
 #include <iostream>
 #include "MyVector.h"
 #include <algorithm>
+#include <stdexcept>
 
 using namespace std;
 
@@ -90,22 +91,29 @@ MyVector::~MyVector()
 
 MyVector& MyVector::operator=(const MyVector& copy)
 {
-	_size = copy._size;
-	_capacity = copy._capacity;
-	if (copy._strat == ResizeStrategy::Multiplicative)
+	if (copy._data != this->_data)
 	{
+		if (this->_data == copy._data)
+		{
+			return *this;
+		}
+
+		_size = copy._size;
+		_capacity = copy._capacity;
+		_strat = copy._strat;
 		_coef = copy._coef;
+		delete _data;
+		_data = new ValueType[_capacity];
+		for (int i = 0; i < _size; i++)
+		{
+			_data[i] = copy._data[i];
+		}
+		return *this;
 	}
 	else
 	{
-		_coef = copy._coef;
+		return *this;
 	}
-	_data = new ValueType[_capacity];
-	for (int i = 0; i < _size; i++)
-	{
-		_data[i] = copy._data[i];
-	}
-	return *this;
 }
 
 ValueType& MyVector::operator[](const size_t i) const
@@ -145,9 +153,9 @@ void MyVector::popBack()
 {
 	if (_size > 0)
 	{
-		_data[_size - 1] = 0;
-		_size--;
-		while (loadFactor() <= (1 / (_coef * _coef)))
+		resize(_size - 1);
+		//_size--;
+		/*while (loadFactor() <= (1 / (_coef * _coef)))
 		{
 			if (_strat == ResizeStrategy::Multiplicative)
 			{
@@ -157,8 +165,14 @@ void MyVector::popBack()
 			{
 				_capacity = _capacity - _coef;
 			}
-		}
+		}*/
 	}
+	else
+	{
+		throw out_of_range("Vector is empty");
+		//return;
+	}
+		
 
 }
 
@@ -172,7 +186,7 @@ void MyVector::insert(const size_t i, const ValueType& value)
 		{
 			bufArr[j + 1] = _data[j];
 		}
-		bufArr[0] = value;
+		bufArr[0] = value; 
 		resize(_size + 1);
 		for (int k = 0; k < _size; k++)
 		{
@@ -317,7 +331,7 @@ void MyVector::reserve(const size_t capacity)
 		}
 		else
 		{
-			if (_strat == ResizeStrategy::Additive)
+			if (_strat == ResizeStrategy::Multiplicative)
 			{
 				while (loadFactor() <= (1 / (_coef * _coef)))
 				{
@@ -451,42 +465,65 @@ void MyVector::resize(const size_t size, const ValueType value)
 
 void MyVector::erase(const size_t i)
 {
-	ValueType* bufArr = new ValueType[_size - 1];
-	for (int j = 0; j < i; j++)
+	if (_size >= i)
 	{
-		bufArr[j] = _data[j];
+		ValueType* bufArr = new ValueType[_size - 1];
+		for (int j = 0; j < i; j++)
+		{
+			bufArr[j] = _data[j];
+		}
+		for (int k = i + 1; k < _size; k++)
+		{
+			bufArr[k - 1] = _data[k];
+		}
+		resize(_size - 1);
+		for (int m = 0; m < _size; m++)
+		{
+			_data[m] = bufArr[m];
+		}
+		delete[] bufArr;
+		bufArr = nullptr;
+		if (_capacity == 0)
+		{
+			reserve(1);
+		}
 	}
-	for (int k = i + 1; k < _size; k++)
+	else
 	{
-		bufArr[k - 1] = _data[k];
+		throw out_of_range("index not found");
 	}
-	resize(_size - 1);
-	for (int m = 0; m < _size; m++)
-	{
-		_data[m] = bufArr[m];
-	}
-	delete[] bufArr;
-	bufArr = nullptr;
 }
 
 void MyVector::erase(const size_t i, const size_t len)
 {
-	ValueType* bufArr = new ValueType[_size - len];
-	for (int j = 0; j < i; j++)
+	if (i + len > _size - i)
 	{
-		bufArr[j] = _data[j];
+		throw out_of_range("to match len");
+		//return;
 	}
-	for (int k = i + len; k < _size; k++)
+	else 
 	{
-		bufArr[k - len] = _data[k];
-	}
-	resize(_size - len);
-	for (int m = 0; m < _size; m++)
-	{
-		_data[m] = bufArr[m];
-	}
-	delete[] bufArr;
-	bufArr = nullptr;
+		ValueType* bufArr = new ValueType[_size - len];
+		for (int j = 0; j < i; j++)
+		{
+			bufArr[j] = _data[j];
+		}
+		for (int k = i + len; k < _size; k++)
+		{
+			bufArr[k - len] = _data[k];
+		}
+		resize(_size - len);
+		for (int m = 0; m < _size; m++)
+		{
+			_data[m] = bufArr[m];
+		}
+		delete[] bufArr;
+		bufArr = nullptr;
+		if (_capacity == 0)
+		{
+			reserve(1);
+		}
+	}	
 }
 
 void MyVector::clear()
@@ -537,7 +574,8 @@ long long int MyVector::find(const ValueType& value, bool isBegin) const
 	}
 	if (a == 0)
 	{
-		return -1;
+		throw out_of_range("value not found");
+		//return -1;
 	}
 }
 
@@ -584,7 +622,10 @@ MyVector sortedSquares(const MyVector& vec, SortedStrategy strategy)
 
 /*int main()
 {
-	MyVector a(21);
+	MyVector a;
+	a.pushBack(2);
+	a.find(1,true);
+	a = a;
 	for (int i = -10; i <= 10; i++)
 	{
 		a[i + 10] = i;
